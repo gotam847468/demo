@@ -1,0 +1,22 @@
+EntityManager session = null;
+        EntityTransaction tx2 = null;
+        try {
+            session = DataJpaEntityManager.getInstance();
+            if (session != null) {
+                tx2 = session.getTransaction();
+                tx2.begin();
+                Query query = session.createNativeQuery(sql);
+                sqlObjects = query.getResultList();
+                tx2.commit();
+            }
+        } catch (Exception e) {
+            if (tx2 != null && tx2.isActive()) {
+                tx2.rollback();
+            }
+            logger.error("Error in retrieving data status SQL: ", e);
+            throw e;
+        } finally {
+            if (session != null && session.isOpen()) {
+                session.close();
+            }
+        }

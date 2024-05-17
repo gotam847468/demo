@@ -1,0 +1,76 @@
+
+
+import jakarta.persistence.EntityManager;
+import jakarta.persistence.EntityManagerFactory;
+import java.io.Serializable;
+import org.apache.log4j.Logger;
+
+public class DataJpaEntityManager implements Serializable {
+    private static final Logger logger = Logger.getLogger(DataJpaEntityManager.class);
+    private static final long serialVersionUID = -2667077558259280133L;
+    private static EntityManager entityManager;
+    private static EntityManagerFactory entityManagerFactoryy;
+    private static DataJpaEntityManager instance = null;
+
+    private DataJpaEntityManager(EntityManagerFactory entityManagerFactory) {
+        entityManagerFactoryy = entityManagerFactory;
+        logger.info("DataJpaEntityManager instance created.");
+    }
+
+    public DataJpaEntityManager() {
+        instance = this;
+    }
+
+    public static EntityManager getInstance() {
+        if (instance == null) {
+            Class var0 = DataJpaEntityManager.class;
+            synchronized(DataJpaEntityManager.class) {
+                if (instance == null) {
+                    instance = new DataJpaEntityManager();
+                }
+            }
+        } else if (instance.getEntityManagerFactory() != null) {
+            return instance.getEntityManagerFactory().createEntityManager();
+        }
+
+        return instance.getEntityManager();
+    }
+
+    public EntityManager getEntityManager() {
+        if (entityManager == null) {
+            logger.error("EntityManager is not initialized.");
+            return null;
+        } else {
+            return entityManager;
+        }
+    }
+
+    public EntityManagerFactory getEntityManagerFactory() {
+        if (entityManagerFactoryy == null) {
+            logger.error("EntityManagerFactory is not initialized.");
+            return null;
+        } else {
+            return entityManagerFactoryy;
+        }
+    }
+
+    public void setEntityManagerFactory(EntityManagerFactory entityManagerFactory) {
+        if (entityManagerFactoryy == null) {
+            entityManagerFactoryy = entityManagerFactory;
+            logger.info("setting the entity manager factory " + entityManagerFactory.toString());
+        }
+
+    }
+
+    public void setEntityManager(EntityManager entityManager) {
+        DataJpaEntityManager.entityManager = entityManager;
+        logger.info("setting the entity manager " + entityManager.toString());
+    }
+
+    public static void closeEntityManager(EntityManager em) {
+        if (em != null) {
+            em.close();
+        }
+
+    }
+}
