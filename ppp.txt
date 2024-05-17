@@ -1,0 +1,20 @@
+datasource.aldb.username=
+datasource.aldb.password=
+datasource.aldb.url=
+datasource.aldb.driver-class-name=org.postgresql.Driver
+datasource.aldb.hikari.connectionTimeout: 30000
+datasource.aldb.hikari.validationTimeout: 5000
+datasource.aldb.hikari.maximumPoolSize: 20
+datasource.aldb.hikari.leakThreshold: 30000
+datasource.aldb.hikari.maxLifeTime: 30000
+datasource.aldb.hikari.idleTimeOut: 30000
+datasource.aldb.hikari.autoCommit: true
+#Oracle
+datasource.unix.username=
+datasource.unix.password=
+datasource.unix.it.username=
+datasource.unix.it.password=
+datasource.unix.it.hikari.minimumIdle: 10
+datasource.unix.it.hikari.maximumPoolSize: 10
+datasource.unix.it.hikari.idleTimeout: 120000
+datasource.unix.it.hikari.connectionTimeout: 300000
