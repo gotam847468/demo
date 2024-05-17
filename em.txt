@@ -1,0 +1,17 @@
+@PersistenceContext(unitName = "springDataJpaEntity")
+	EntityManager em;
+
+List locationObjects = new ArrayList<>();
+			try {
+				if (em != null) {
+					jakarta.persistence.Query sql = em.createNativeQuery(query);
+					locationObjects = sql.getResultList();
+				}
+			} catch (Exception e) {
+				logger.error("Error in Location Object SQL: ", e);
+				throw e;
+			}
+			if (locationObjects.get(0) == null || ((Object[]) locationObjects.get(0)).length == 0) {
+				return null;
+			}
+			Object[] values = (Object[]) locationObjects.get(0);

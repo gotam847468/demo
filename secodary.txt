@@ -1,0 +1,104 @@
+package com.ipacc.alf.javabatch.config;
+
+import com.ipacc.base.data.DataJpaEntityManager;
+import com.zaxxer.hikari.HikariConfig;
+import com.zaxxer.hikari.HikariDataSource;
+import jakarta.persistence.EntityManager;
+import jakarta.persistence.EntityManagerFactory;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
+import org.springframework.beans.factory.annotation.Qualifier;
+import org.springframework.beans.factory.annotation.Value;
+import org.springframework.boot.orm.jpa.EntityManagerFactoryBuilder;
+import org.springframework.context.annotation.Bean;
+import org.springframework.context.annotation.Configuration;
+import org.springframework.context.annotation.Primary;
+import org.springframework.data.jpa.repository.config.EnableJpaRepositories;
+import org.springframework.orm.jpa.JpaTransactionManager;
+import org.springframework.orm.jpa.LocalContainerEntityManagerFactoryBean;
+import org.springframework.transaction.PlatformTransactionManager;
+import org.springframework.transaction.annotation.EnableTransactionManagement;
+import org.springframework.transaction.support.TransactionTemplate;
+
+import javax.sql.DataSource;
+
+@Configuration
+@EnableTransactionManagement
+@EnableJpaRepositories(
+        basePackages = "com.ipacc.agency.springdatajpa.repository",
+        entityManagerFactoryRef = "secondaryEntityManagerFactory",
+        transactionManagerRef = "secondaryTransactionManager"
+)
+public class SecondaryDataSourceConfiguration {
+    private static final Logger logger        = LogManager.getLogger(SecondaryDataSourceConfiguration.class);
+    @Value("${datasource.aldb.url}")
+    private String postgresUrl;
+    @Value("${datasource.aldb.driver-class-name}")
+    private String postgresDriver;
+    @Value("${datasource.aldb.username}")
+    private String postgresUsername;
+    @Value("${datasource.aldb.password}")
+    private String postgresPassword;
+    @Value("${datasource.aldb.hikari.connectionTimeout}")
+    private Long connTimeout;
+    @Value("${datasource.aldb.hikari.maximumPoolSize}")
+    private int poolSize;
+    @Value("${datasource.aldb.hikari.maxLifeTime}")
+    private Long maxLifeTime;
+    @Value("${datasource.aldb.hikari.autoCommit}")
+    private boolean autoCommit;
+    @Value("${datasource.aldb.hikari.idleTimeOut}")
+    private Long idleTimeOut;
+    @Value("${datasource.aldb.hikari.validationTimeout}")
+    private Long validationTimeout;
+    @Bean("secondaryDataSource")
+    //@Primary
+    public DataSource postgresDataSource()  {
+        HikariConfig aldbPostgresDatasource = new HikariConfig();
+        aldbPostgresDatasource.setDriverClassName(postgresDriver);
+        aldbPostgresDatasource.setJdbcUrl(postgresUrl);
+        aldbPostgresDatasource.setUsername(postgresUsername);
+        aldbPostgresDatasource.setPassword(postgresPassword);
+        aldbPostgresDatasource.setConnectionTimeout(connTimeout);
+        aldbPostgresDatasource.setMaximumPoolSize(poolSize);
+        aldbPostgresDatasource.setMaxLifetime(maxLifeTime);
+        aldbPostgresDatasource.setAutoCommit(autoCommit);
+        aldbPostgresDatasource.setPoolName("postgressSpringHikariCP");
+        aldbPostgresDatasource.setValidationTimeout(validationTimeout);
+        aldbPostgresDatasource.setConnectionTestQuery("select 1");
+        aldbPostgresDatasource.setIdleTimeout(idleTimeOut);
+        logger.debug("###Configs being used");
+        logger.debug("url: "+ postgresUrl);
+        logger.debug("username: "+ postgresUsername);
+        logger.debug("password: "+ postgresPassword);
+        return new HikariDataSource(aldbPostgresDatasource);
+    }
+
+    @Bean("secondaryEntityManagerFactory")
+    @Primary
+    public LocalContainerEntityManagerFactoryBean secondaryEntityManagerFactory(EntityManagerFactoryBuilder builder, @Qualifier("secondaryDataSource") DataSource dataSource){
+        return builder.dataSource(dataSource)
+                .packages("com.ipacc.agency.springdatajpa.entity")
+                .persistenceUnit("springDataJpaEntity").build();
+    }
+
+    @Bean("secondaryTransactionManager")
+    public PlatformTransactionManager transactionManager(
+            @Qualifier("secondaryEntityManagerFactory") EntityManagerFactory entityManagerFactory){
+        return new JpaTransactionManager(entityManagerFactory);
+    }
+
+    @Bean(name = { "dataJpaEntityManager" })
+    //@Primary
+    public DataJpaEntityManager dataJpaEntityManager(@Qualifier("secondaryEntityManagerFactory") EntityManagerFactory secondaryEmf) {
+        DataJpaEntityManager dataJpaEntityManager = new DataJpaEntityManager();
+        EntityManager secondaryEntityManager = secondaryEmf.createEntityManager();
+        dataJpaEntityManager.setEntityManager(secondaryEntityManager);
+        dataJpaEntityManager.setEntityManagerFactory(secondaryEmf);
+        return dataJpaEntityManager;
+    }
+    @Bean
+    public TransactionTemplate transactionTemplate(@Qualifier("secondaryTransactionManager") PlatformTransactionManager transactionManager) {
+        return new TransactionTemplate(transactionManager);
+    }
+}
